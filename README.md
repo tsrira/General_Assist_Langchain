@@ -15,11 +15,44 @@ Welcome to a fully open-source, retrieval-augmented chatbot powered by [Mistral-
 - **Modern Streamlit UI**: Clean and interactive user experience.
 
 ## 💡 Usage
+Step 1: Click "Upload your Student Handbook PDF" on the sidebar.
 
-- Upload your Student Handbook PDF on the left sidebar.
-- Enter your questions in the chat box.
-- Receive grounded, precise answers referencing your document.
-- If the answer is not found in the document, the bot politely declines.
+Step 2: Type your questions about policies, exams, support, grading, and more!
+
+Step 3: The chatbot will return answers that are strictly grounded in the context of your uploaded document. If the information doesn’t exist, it refuses politely.
+
+## 📦 Technologies Used
+Streamlit
+
+Transformers
+
+Mistral-7B
+
+Sentence Transformers
+
+FAISS
+
+pdfplumber
+
+bitsandbytes
+
+## 🔒 Guardrails & Reliability
+Retrieval-augmented: No out-of-context hallucination. Answers are solely based on semantic similarity to user queries and actual PDF content.
+
+Strict refusal: The bot returns a polite message if the answer is not present in the uploaded knowledge base.
+
+## 📝 Example
+User: "What is the attendance requirement?"
+
+Chatbot: "UG (nonengineering): 75% per subject. Engineering: 75% per semester."
+
+User: "Who is the President of the United States?"
+
+Chatbot: "Sorry! I can't find relevant information from the knowledge base. Don't provide any additional information."
+
+## 📢 Contributing
+Pull requests, issues, and discussions are welcome! Feel free to fork the repository and improve the app for other handbooks or documents.
+
 
 ## 📸 Screenshot
 
