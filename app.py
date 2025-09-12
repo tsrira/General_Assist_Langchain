@@ -123,5 +123,3 @@ if pdf_file:
                 answer = get_handbook_response(question, llm_pipe, tokenizer, context, sim)
                 st.markdown("**Chatbot:**")
                 st.write(answer)
-
-
