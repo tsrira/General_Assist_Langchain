@@ -6,3 +6,4 @@ pdfplumber
 faiss-cpu
 bitsandbytes
 accelerate
+scikit-learn
