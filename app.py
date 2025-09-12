@@ -5,7 +5,6 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
-import torch
 
 # Hugging Face API token: either in secrets or in environment
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HUGGINGFACE_TOKEN", ""))
@@ -124,4 +123,5 @@ if pdf_file:
                 answer = get_handbook_response(question, llm_pipe, tokenizer, context, sim)
                 st.markdown("**Chatbot:**")
                 st.write(answer)
+
 
