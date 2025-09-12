@@ -7,7 +7,12 @@ import faiss
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
 
-
+st.write("CUDA Available:", torch.cuda.is_available())
+if torch.cuda.is_available():
+    st.write("GPU Device:", torch.cuda.get_device_name(0))
+else:
+    st.warning("No CUDA GPU detected. Performance will be slower.")
+    
 # Hugging Face API token from Streamlit secrets or environment variables
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HUGGINGFACE_TOKEN", ""))
 MODEL_NAME = "mistralai/Mistral-7B-v0.1"
@@ -125,3 +130,4 @@ if pdf_file:
                 answer = get_handbook_response(question, llm_pipe, tokenizer, context, sim)
                 st.markdown("**Chatbot:**")
                 st.write(answer)
+
