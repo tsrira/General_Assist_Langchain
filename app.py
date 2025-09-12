@@ -1,3 +1,4 @@
+import torch  # Required import to fix NameError
 import os
 import streamlit as st
 import pdfplumber
@@ -5,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
-import torch  # Required import to fix NameError
+
 
 # Hugging Face API token from Streamlit secrets or environment variables
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HUGGINGFACE_TOKEN", ""))
@@ -37,7 +38,7 @@ def load_model():
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
         quantization_config=bnb_config,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
         token=HF_TOKEN,
@@ -46,7 +47,7 @@ def load_model():
         "text-generation",
         model=model,
         tokenizer=tokenizer,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map="auto",
     )
     return llm_pipe, tokenizer
