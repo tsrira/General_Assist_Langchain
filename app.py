@@ -5,11 +5,12 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
+import torch  # Required import to fix NameError
 
-# Hugging Face API token: either in secrets or in environment
+# Hugging Face API token from Streamlit secrets or environment variables
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HUGGINGFACE_TOKEN", ""))
-
 MODEL_NAME = "mistralai/Mistral-7B-v0.1"
+
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
@@ -77,7 +78,7 @@ def build_faiss_index(chunk_embeddings):
 def retrieve_relevant_chunks(query, embedder, index, chunks, top_k=3):
     query_embedding = embedder.encode([query], convert_to_numpy=True)
     distances, indices = index.search(query_embedding, top_k)
-    similarities = 1 / (1 + distances[0])
+    similarities = 1 / (1 + distances[0])  # simple similarity conversion for L2 distances
     return [chunks[i] for i in indices[0]], max(similarities)
 
 def get_handbook_response(question, llm_pipe, tokenizer, context, sim, threshold=0.4, max_length=512):
