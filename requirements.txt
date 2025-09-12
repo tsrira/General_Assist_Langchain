@@ -7,3 +7,4 @@ faiss-cpu>=1.7.4
 bitsandbytes>=0.39.0
 accelerate>=0.22.0
 scikit-learn
+pillow==9.4.0
