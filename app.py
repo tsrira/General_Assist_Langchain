@@ -3,7 +3,7 @@ import streamlit as st
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
 
 HF_TOKEN = st.secrets.get("HF_TOKEN", "")
-MODEL_NAME = "mistralai/Mistral-7B-v0.1"
+MODEL_NAME = "distilgpt2"
 
 @st.cache_resource
 def load_model():
@@ -48,3 +48,4 @@ def load_model():
             device_map="auto" if torch.cuda.is_available() else None,
         )
         return llm_pipe, tokenizer
+
