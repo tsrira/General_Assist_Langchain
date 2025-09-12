@@ -17,8 +17,8 @@ else:
 HF_TOKEN = st.secrets.get("HF_TOKEN", os.getenv("HUGGINGFACE_TOKEN", ""))
 MODEL_NAME = "mistralai/Mistral-7B-v0.1"
 
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 50
+CHUNK_SIZE = 800
+CHUNK_OVERLAP = 150
 
 @st.cache_resource
 def load_embedder():
@@ -130,5 +130,6 @@ if pdf_file:
                 answer = get_handbook_response(question, llm_pipe, tokenizer, context, sim)
                 st.markdown("**Chatbot:**")
                 st.write(answer)
+
 
 
