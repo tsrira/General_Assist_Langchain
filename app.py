@@ -57,7 +57,7 @@ def load_model():
     )
     return llm_pipe, tokenizer
 
-def extract_and_chunk_pdf(pdf_path, chunk_size=500, chunk_overlap=50):
+def extract_and_chunk_pdf(pdf_path, chunk_size=800, chunk_overlap=150):
     texts = []
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
@@ -130,4 +130,5 @@ if pdf_file:
                 answer = get_handbook_response(question, llm_pipe, tokenizer, context, sim)
                 st.markdown("**Chatbot:**")
                 st.write(answer)
+
 
