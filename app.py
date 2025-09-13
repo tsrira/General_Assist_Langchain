@@ -85,7 +85,7 @@ if pdf_file:
         template = """
         You are a helpful assistant. Answer the question ONLY based on the context below.
         If you do not find relevant information, respond with exactly:
-        "Sorry, I do not have that information."
+        "Sorry! I can't find relevant information from the knowledge base."
 
         CONTEXT:
         {context}
@@ -135,11 +135,12 @@ if pdf_file:
         with st.spinner("Thinking..."):
             similarity = get_similarity(vectordb, embedder, question)
             if similarity < SIMILARITY_THRESHOLD:
-                answer = "Sorry, I do not have that information."
+                answer = "Sorry! I can't find relevant information from the knowledge base."
             else:
                 answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
 
 
