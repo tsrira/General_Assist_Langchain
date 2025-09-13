@@ -66,7 +66,7 @@ def load_llm():
     pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer, max_length=256)
     return HuggingFacePipeline(pipeline=pipe)
 
-@st.cache_resource(show_spinner=False)
+#@st.cache_resource(show_spinner=False)
 def create_vectordb(docs):
     embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vectordb = FAISS.from_documents(docs, embedder)
@@ -139,3 +139,4 @@ ANSWER:
         st.write(answer)
 else:
     st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
+
