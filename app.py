@@ -16,7 +16,7 @@ from langchain_community.llms import HuggingFacePipeline
 
 from langchain.chains import RetrievalQA
 
-from langchain_core.prompts import PromptTemplate  # Updated import per warning
+from langchain import PromptTemplate
 
 import numpy as np
 
@@ -34,28 +34,29 @@ RETRIEVER_TOP_K_DEFAULT = 3
 
 SIMILARITY_THRESHOLD = 0.35
 
-DOCUMENTS_FOLDER = st.text_input("Enter the folder path containing PDFs and DOC files:")
-
-def read_pdf_text(pdf_path):
-    with pdfplumber.open(pdf_path) as pdf:
+# Read text from uploaded PDF file-like object
+def read_pdf_text(pdf_file):
+    with pdfplumber.open(pdf_file) as pdf:
         return "\n".join(page.extract_text() or "" for page in pdf.pages)
 
-def read_doc_text(doc_path):
-    doc = Document(doc_path)
-    fullText = []
-    for para in doc.paragraphs:
-        fullText.append(para.text)
+# Read text from uploaded DOC/DOCX file-like object
+def read_doc_text(doc_file):
+    # Save uploaded file temporarily in-memory or disk for python-docx
+    # Since docx.Document supports file-like objects, we pass doc_file directly
+    doc = Document(doc_file)
+    fullText = [para.text for para in doc.paragraphs]
     return "\n".join(fullText)
 
-def extract_text_from_folder(folder_path):
+# Extract text from multiple uploaded files
+def extract_text_from_files(files):
     all_texts = []
-    for filename in os.listdir(folder_path):
-        filepath = os.path.join(folder_path, filename)
-        if filename.lower().endswith(".pdf"):
-            text = read_pdf_text(filepath)
+    for file in files:
+        filename = file.name.lower()
+        if filename.endswith(".pdf"):
+            text = read_pdf_text(file)
             all_texts.append(text)
-        elif filename.lower().endswith(".docx") or filename.lower().endswith(".doc"):
-            text = read_doc_text(filepath)
+        elif filename.endswith(".docx") or filename.endswith(".doc"):
+            text = read_doc_text(file)
             all_texts.append(text)
     return "\n\n".join(all_texts)
 
@@ -80,9 +81,11 @@ def get_similarity(vectordb, embedder, query):
 
 st.title("Student Handbook RAG Chatbot (LangChain)")
 
-if DOCUMENTS_FOLDER and os.path.isdir(DOCUMENTS_FOLDER):
-    with st.spinner(f"Loading and indexing documents from folder: {DOCUMENTS_FOLDER} ..."):
-        combined_text = extract_text_from_folder(DOCUMENTS_FOLDER)
+uploaded_files = st.file_uploader("Upload your PDFs and DOC/DOCX files", type=["pdf", "doc", "docx"], accept_multiple_files=True)
+
+if uploaded_files:
+    with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
+        combined_text = extract_text_from_files(uploaded_files)
         docs = chunk_document(combined_text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
         embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         vectordb = FAISS.from_documents(docs, embedder)
@@ -112,7 +115,8 @@ if DOCUMENTS_FOLDER and os.path.isdir(DOCUMENTS_FOLDER):
             chain_type_kwargs={"prompt": prompt},
         )
 
-    st.subheader("Ask about the Student Handbook, Indian Veg Recipe, Onboarding or Panicker Travels")
+    st.subheader("Ask your question")
+
     question = st.text_input("Enter your question:")
 
     if question:
@@ -125,4 +129,4 @@ if DOCUMENTS_FOLDER and os.path.isdir(DOCUMENTS_FOLDER):
             st.markdown("**Chatbot:**")
             st.write(answer)
 else:
-    st.info("Please enter a valid folder path containing your PDF and DOC files.")
+    st.info("Please upload one or more PDF or DOC files to proceed.")
