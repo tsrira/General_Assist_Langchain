@@ -86,9 +86,10 @@ if pdf_file:
         with st.spinner("Thinking..."):
             similarity = get_similarity(vectordb, embedder, question)
             if similarity < SIMILARITY_THRESHOLD:
-                answer = "Sorry, I do not have that information."
+                answer = "I can't find relevant information from the knowledge base."
             else:
                 answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
