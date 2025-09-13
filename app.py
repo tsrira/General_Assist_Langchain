@@ -19,7 +19,7 @@ RETRIEVER_TOP_K_DEFAULT = 3
 SIMILARITY_THRESHOLD = 0.35
 
 # Folder path containing documents
-DOCUMENTS_FOLDER = "path/to/your/documents/folder"
+DOCUMENTS_FOLDER = st.text_input("Enter the folder path containing PDFs and DOC files:")
 
 def read_pdf_text(pdf_path):
     with pdfplumber.open(pdf_path) as pdf:
@@ -108,3 +108,4 @@ if question:
             answer = qa_chain.run(question)
         st.markdown("**Chatbot:**")
         st.write(answer)
+
