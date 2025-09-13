@@ -8,7 +8,7 @@ import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
 
 HF_TOKEN = st.secrets.get("HF_TOKEN", "")
-MODEL_NAME = "distilgpt2"
+MODEL_NAME = "mistralai/Mistral-7B-v0.1"
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
@@ -151,4 +151,5 @@ if pdf_file:
 
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
