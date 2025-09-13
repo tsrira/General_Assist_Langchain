@@ -59,12 +59,11 @@ def suggest_similarity_threshold(vectordb, embedder, in_context_queries, out_con
 st.title("Student Handbook RAG Chatbot (LangChain)")
 
 # Sidebar controls for tuning
-'''
-CHUNK_SIZE = st.sidebar.slider("Chunk Size", 300, 800, CHUNK_SIZE_DEFAULT, step=50)
-CHUNK_OVERLAP = st.sidebar.slider("Chunk Overlap", 20, 150, CHUNK_OVERLAP_DEFAULT, step=10)
-RETRIEVER_TOP_K = st.sidebar.slider("Retriever Top K", 1, 7, RETRIEVER_TOP_K_DEFAULT, step=1)
-SIMILARITY_THRESHOLD = st.sidebar.slider("Similarity Threshold", 0.1, 0.7, 0.32, step=0.01)
-'''
+
+# CHUNK_SIZE = st.sidebar.slider("Chunk Size", 300, 800, CHUNK_SIZE_DEFAULT, step=50)
+# CHUNK_OVERLAP = st.sidebar.slider("Chunk Overlap", 20, 150, CHUNK_OVERLAP_DEFAULT, step=10)
+# RETRIEVER_TOP_K = st.sidebar.slider("Retriever Top K", 1, 7, RETRIEVER_TOP_K_DEFAULT, step=1)
+# SIMILARITY_THRESHOLD = st.sidebar.slider("Similarity Threshold", 0.1, 0.7, 0.32, step=0.01)
 
 CHUNK_SIZE = CHUNK_SIZE_DEFAULT
 CHUNK_OVERLAP = CHUNK_OVERLAP_DEFAULT
@@ -140,6 +139,7 @@ if pdf_file:
                 answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
 
 
