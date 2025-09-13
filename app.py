@@ -17,26 +17,25 @@ CHUNK_OVERLAP_DEFAULT = 50
 RETRIEVER_TOP_K_DEFAULT = 3
 SIMILARITY_THRESHOLD = 0.35
 
-def read_pdf_text(pdf_file):
+def chunk_pdf_in_batches(pdf_file, chunk_size, chunk_overlap):
+    docs = []
     with pdfplumber.open(pdf_file) as pdf:
-        return "\n".join(page.extract_text() or "" for page in pdf.pages)
+        batch_size = 5  # pages per batch
+        for i in range(0, len(pdf.pages), batch_size):
+            batch_text = "\n".join(page.extract_text() or "" for page in pdf.pages[i:i+batch_size])
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                separators=["\n\n", "\n", " ", ""]
+            )
+            batch_docs = splitter.create_documents([batch_text])
+            docs.extend(batch_docs)
+    return docs
 
 def read_doc_text(doc_file):
     doc = Document(doc_file)
     fullText = [para.text for para in doc.paragraphs]
     return "\n".join(fullText)
-
-def extract_texts_from_files(files):
-    texts = []
-    for file in files:
-        filename = file.name.lower()
-        if filename.endswith(".pdf"):
-            text = read_pdf_text(file)
-            texts.append(text)
-        elif filename.endswith(".docx") or filename.endswith(".doc"):
-            text = read_doc_text(file)
-            texts.append(text)
-    return texts
 
 def chunk_document(text, chunk_size, chunk_overlap):
     splitter = RecursiveCharacterTextSplitter(
@@ -47,6 +46,19 @@ def chunk_document(text, chunk_size, chunk_overlap):
     docs = splitter.create_documents([text])
     return docs
 
+def extract_and_chunk_files(files, chunk_size, chunk_overlap):
+    all_docs = []
+    for file in files:
+        filename = file.name.lower()
+        if filename.endswith(".pdf"):
+            pdf_docs = chunk_pdf_in_batches(file, chunk_size, chunk_overlap)
+            all_docs.extend(pdf_docs)
+        elif filename.endswith(".docx") or filename.endswith(".doc"):
+            text = read_doc_text(file)
+            docs = chunk_document(text, chunk_size, chunk_overlap)
+            all_docs.extend(docs)
+    return all_docs
+
 @st.cache_resource(show_spinner=False)
 def load_llm():
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_auth_token=HF_TOKEN, trust_remote_code=True)
@@ -55,9 +67,9 @@ def load_llm():
     return HuggingFacePipeline(pipeline=pipe)
 
 @st.cache_resource(show_spinner=False)
-def create_vectordb(_docs):
+def create_vectordb(docs):
     embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vectordb = FAISS.from_documents(_docs, embedder)
+    vectordb = FAISS.from_documents(docs, embedder)
     return vectordb, embedder
 
 def get_similarity(vectordb, embedder, query):
@@ -67,7 +79,7 @@ def get_similarity(vectordb, embedder, query):
     similarity = 1 / (1 + distances[0][0])
     return similarity
 
-st.title("Student Handbook RAG Chatbot (LangChain)")
+st.title("General RAG Chatbot (LangChain)")
 
 uploaded_files = st.file_uploader(
     "Upload your PDFs and DOC/DOCX files",
@@ -77,11 +89,7 @@ uploaded_files = st.file_uploader(
 
 if uploaded_files:
     with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
-        texts = extract_texts_from_files(uploaded_files)
-        all_docs = []
-        for text in texts:
-            docs = chunk_document(text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
-            all_docs.extend(docs)
+        all_docs = extract_and_chunk_files(uploaded_files, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
         vectordb, embedder = create_vectordb(all_docs)
         retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
         llm = load_llm()
