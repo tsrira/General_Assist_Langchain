@@ -120,7 +120,7 @@ ANSWER:
             llm=llm,
             retriever=retriever,
             chain_type="stuff",
-            return_source_documents=False,
+            return_source_documents=True,
             chain_type_kwargs={"prompt": prompt},
         )
 
@@ -139,6 +139,7 @@ ANSWER:
         st.write(answer)
 else:
     st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
+
 
 
 
