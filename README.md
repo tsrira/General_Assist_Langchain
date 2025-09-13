@@ -10,7 +10,7 @@ Welcome to a fully open-source, retrieval-augmented chatbot powered by (LangChai
 
 - **Upload any student handbook PDF**: Instantly chunked and indexed for semantic search.
 - **Ask questions naturally**: Retrieval-Augmented Generation (RAG) ensures answers are grounded in your specific document content.
-- **Powered by Mistral-7B**: High-quality generative language model handles query answering.
+- **Powered by LangChain**: High-quality generative language model handles query answering.
 - **Efficient embedding & retrieval**: Leverages Sentence Transformers & FAISS for fast similarity search.
 - **Modern Streamlit UI**: Clean and interactive user experience.
 
