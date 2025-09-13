@@ -54,10 +54,11 @@ def load_llm():
     pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer, max_length=256)
     return HuggingFacePipeline(pipeline=pipe)
 
+# Fix: underscore prefix to instruct Streamlit not to hash the argument
 @st.cache_resource(show_spinner=False)
-def create_vectordb(docs):
+def create_vectordb(_docs):  
     embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vectordb = FAISS.from_documents(docs, embedder)
+    vectordb = FAISS.from_documents(_docs, embedder)
     return vectordb, embedder
 
 def get_similarity(vectordb, embedder, query):
@@ -81,7 +82,6 @@ if uploaded_files:
         docs = chunk_document(combined_text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
         vectordb, embedder = create_vectordb(docs)
         retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
-
         llm = load_llm()
 
         template = """
@@ -92,9 +92,11 @@ if uploaded_files:
         "Sorry! I can't find relevant information from the knowledge base."
 
         CONTEXT:
+
         {context}
 
         QUESTION:
+
         {question}
 
         ANSWER:
@@ -123,7 +125,7 @@ if uploaded_files:
                 answer = "Sorry! I can't find relevant information from the knowledge base."
             else:
                 answer = qa_chain.invoke(question)
-            st.markdown("**Chatbot:**")
-            st.write(answer)
+        st.markdown("**Chatbot:**")
+        st.write(answer)
 else:
     st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
