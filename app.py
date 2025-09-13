@@ -5,9 +5,9 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
-from langchain_community.llms import HuggingFacePipeline
+from langchain_huggingface import HuggingFacePipeline  # updated import
 from langchain.chains import RetrievalQA
-from langchain_core.prompts import PromptTemplate  # updated import per LangChain warning
+from langchain_core.prompts import PromptTemplate  # updated import
 import numpy as np
 from docx import Document  # pip install python-docx
 
@@ -18,19 +18,15 @@ CHUNK_OVERLAP_DEFAULT = 50
 RETRIEVER_TOP_K_DEFAULT = 3
 SIMILARITY_THRESHOLD = 0.35
 
-# Read text from uploaded PDF file-like object
 def read_pdf_text(pdf_file):
     with pdfplumber.open(pdf_file) as pdf:
         return "\n".join(page.extract_text() or "" for page in pdf.pages)
 
-# Read text from uploaded DOC/DOCX file-like object
 def read_doc_text(doc_file):
-    # docx.Document supports file-like objects, so pass directly
     doc = Document(doc_file)
     fullText = [para.text for para in doc.paragraphs]
     return "\n".join(fullText)
 
-# Extract text from multiple uploaded files
 def extract_text_from_files(files):
     all_texts = []
     for file in files:
@@ -84,15 +80,15 @@ if uploaded_files:
         llm = load_llm()
 
         template = """
-        You are a helpful assistant. Answer the question ONLY based on the context below.
-        If you do not find relevant information, respond with exactly:
-        "Sorry! I can't find relevant information from the knowledge base."
-        CONTEXT:
-        {context}
-        QUESTION:
-        {question}
-        ANSWER:
-        """
+You are a helpful assistant. Answer the question ONLY based on the context below.
+If you do not find relevant information, respond with exactly:
+\"Sorry! I can't find relevant information from the knowledge base.\"
+CONTEXT:
+{context}
+QUESTION:
+{question}
+ANSWER:
+"""
         prompt = PromptTemplate(
             template=template,
             input_variables=["context", "question"]
@@ -104,15 +100,17 @@ if uploaded_files:
             return_source_documents=False,
             chain_type_kwargs={"prompt": prompt},
         )
+
     st.subheader("Ask your question")
     question = st.text_input("Enter your question:")
+
     if question:
         with st.spinner("Thinking..."):
             similarity = get_similarity(vectordb, embedder, question)
             if similarity < SIMILARITY_THRESHOLD:
                 answer = "Sorry! I can't find relevant information from the knowledge base."
             else:
-                answer = qa_chain.run(question)
+                answer = qa_chain.invoke(question)  # use invoke() instead of run()
             st.markdown("**Chatbot:**")
             st.write(answer)
 else:
