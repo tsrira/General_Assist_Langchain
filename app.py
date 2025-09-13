@@ -15,7 +15,7 @@ MODEL_NAME = "google/flan-t5-base"
 CHUNK_SIZE_DEFAULT = 500
 CHUNK_OVERLAP_DEFAULT = 50
 RETRIEVER_TOP_K_DEFAULT = 3
-SIMILARITY_THRESHOLD = 0.35
+SIMILARITY_THRESHOLD = 0.45
 
 def chunk_pdf_in_batches(pdf_file, chunk_size, chunk_overlap):
     docs = []
@@ -139,5 +139,6 @@ ANSWER:
         st.write(answer)
 else:
     st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
+
 
 
