@@ -4,7 +4,7 @@ import streamlit as st
 
 import pdfplumber
 
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from langchain_huggingface import HuggingFaceEmbeddings
 
@@ -16,7 +16,7 @@ from langchain_community.llms import HuggingFacePipeline
 
 from langchain.chains import RetrievalQA
 
-from langchain import PromptTemplate
+from langchain_core.prompts import PromptTemplate  # Updated import per warning
 
 import numpy as np
 
@@ -34,34 +34,39 @@ RETRIEVER_TOP_K_DEFAULT = 3
 
 SIMILARITY_THRESHOLD = 0.35
 
-# Read text from uploaded PDF file-like object
-def read_pdf_text(pdf_file):
-    with pdfplumber.open(pdf_file) as pdf:
+# Folder path containing documents
+
+DOCUMENTS_FOLDER = st.text_input("Enter the folder path containing PDFs and DOC files:")
+
+def read_pdf_text(pdf_path):
+    with pdfplumber.open(pdf_path) as pdf:
         return "\n".join(page.extract_text() or "" for page in pdf.pages)
 
-# Read text from uploaded DOC/DOCX file-like object
-def read_doc_text(doc_file):
-    # Save uploaded file temporarily in-memory or disk for python-docx
-    # Since docx.Document supports file-like objects, we pass doc_file directly
-    doc = Document(doc_file)
-    fullText = [para.text for para in doc.paragraphs]
+def read_doc_text(doc_path):
+    doc = Document(doc_path)
+    fullText = []
+    for para in doc.paragraphs:
+        fullText.append(para.text)
     return "\n".join(fullText)
 
-# Extract text from multiple uploaded files
-def extract_text_from_files(files):
+def extract_text_from_folder(folder_path):
     all_texts = []
-    for file in files:
-        filename = file.name.lower()
-        if filename.endswith(".pdf"):
-            text = read_pdf_text(file)
+    for filename in os.listdir(folder_path):
+        filepath = os.path.join(folder_path, filename)
+        if filename.lower().endswith(".pdf"):
+            text = read_pdf_text(filepath)
             all_texts.append(text)
-        elif filename.endswith(".docx") or filename.endswith(".doc"):
-            text = read_doc_text(file)
+        elif filename.lower().endswith(".docx") or filename.lower().endswith(".doc"):
+            text = read_doc_text(filepath)
             all_texts.append(text)
     return "\n\n".join(all_texts)
 
 def chunk_document(text, chunk_size, chunk_overlap):
-    splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        separators=["\n\n", "\n", " ", ""]
+    )
     docs = splitter.create_documents([text])
     return docs
 
@@ -81,11 +86,9 @@ def get_similarity(vectordb, embedder, query):
 
 st.title("Student Handbook RAG Chatbot (LangChain)")
 
-uploaded_files = st.file_uploader("Upload your PDFs and DOC/DOCX files", type=["pdf", "doc", "docx"], accept_multiple_files=True)
-
-if uploaded_files:
-    with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
-        combined_text = extract_text_from_files(uploaded_files)
+if DOCUMENTS_FOLDER and os.path.isdir(DOCUMENTS_FOLDER):
+    with st.spinner(f"Loading and indexing documents from folder: {DOCUMENTS_FOLDER} ..."):
+        combined_text = extract_text_from_folder(DOCUMENTS_FOLDER)
         docs = chunk_document(combined_text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
         embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         vectordb = FAISS.from_documents(docs, embedder)
@@ -93,15 +96,15 @@ if uploaded_files:
         llm = load_llm()
 
         template = """
-        You are a helpful assistant. Answer the question ONLY based on the context below.
-        If you do not find relevant information, respond with exactly:
-        "Sorry! I can't find relevant information from the knowledge base."
-        CONTEXT:
-        {context}
-        QUESTION:
-        {question}
-        ANSWER:
-        """
+You are a helpful assistant. Answer the question ONLY based on the context below.
+If you do not find relevant information, respond with exactly:
+\"Sorry! I can't find relevant information from the knowledge base.\"
+CONTEXT:
+{context}
+QUESTION:
+{question}
+ANSWER:
+"""
         prompt = PromptTemplate(
             template=template,
             input_variables=["context", "question"]
@@ -115,8 +118,7 @@ if uploaded_files:
             chain_type_kwargs={"prompt": prompt},
         )
 
-    st.subheader("Ask your question")
-
+    st.subheader("Ask about the Student Handbook, Indian Veg Recipe, Onboarding or Panicker Travels")
     question = st.text_input("Enter your question:")
 
     if question:
@@ -129,4 +131,4 @@ if uploaded_files:
             st.markdown("**Chatbot:**")
             st.write(answer)
 else:
-    st.info("Please upload one or more PDF or DOC files to proceed.")
+    st.info("Please enter a valid folder path containing your PDF and DOC files.")
