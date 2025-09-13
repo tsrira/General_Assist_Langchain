@@ -48,14 +48,19 @@ if pdf_file:
         llm = load_llm()
 
         template = """
-        You are a helpful assistant. Answer the question ONLY based on the context provided.
-        If the answer is not contained in the context, say "Sorry, I don't know."
+        You are a helpful assistant. Answer the question ONLY based on the context below.  
+        If you do not find relevant information, respond with exactly:  
+        \"Sorry, I do not have that information.\"
+        
         CONTEXT:
         {context}
+        
         QUESTION:
         {question}
+        
         ANSWER:
         """
+        
         prompt = PromptTemplate(
             template=template,
             input_variables=["context", "question"]
@@ -75,6 +80,7 @@ if pdf_file:
             answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
 
 
