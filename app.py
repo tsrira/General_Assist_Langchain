@@ -26,17 +26,17 @@ def read_doc_text(doc_file):
     fullText = [para.text for para in doc.paragraphs]
     return "\n".join(fullText)
 
-def extract_text_from_files(files):
-    all_texts = []
+def extract_texts_from_files(files):
+    texts = []
     for file in files:
         filename = file.name.lower()
         if filename.endswith(".pdf"):
             text = read_pdf_text(file)
-            all_texts.append(text)
+            texts.append(text)
         elif filename.endswith(".docx") or filename.endswith(".doc"):
             text = read_doc_text(file)
-            all_texts.append(text)
-    return "\n\n".join(all_texts)
+            texts.append(text)
+    return texts
 
 def chunk_document(text, chunk_size, chunk_overlap):
     splitter = RecursiveCharacterTextSplitter(
@@ -54,9 +54,8 @@ def load_llm():
     pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer, max_length=256)
     return HuggingFacePipeline(pipeline=pipe)
 
-# Fix: underscore prefix to instruct Streamlit not to hash the argument
 @st.cache_resource(show_spinner=False)
-def create_vectordb(_docs):  
+def create_vectordb(_docs):
     embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     vectordb = FAISS.from_documents(_docs, embedder)
     return vectordb, embedder
@@ -78,30 +77,32 @@ uploaded_files = st.file_uploader(
 
 if uploaded_files:
     with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
-        combined_text = extract_text_from_files(uploaded_files)
-        docs = chunk_document(combined_text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
-        vectordb, embedder = create_vectordb(docs)
+        texts = extract_texts_from_files(uploaded_files)
+        all_docs = []
+        for text in texts:
+            docs = chunk_document(text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
+            all_docs.extend(docs)
+        vectordb, embedder = create_vectordb(all_docs)
         retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
         llm = load_llm()
 
         template = """
-        You are a helpful assistant. Answer the question ONLY based on the context below.
+You are a helpful assistant. Answer the question ONLY based on the context below.
 
-        If you do not find relevant information, respond with exactly:
+If you do not find relevant information, respond with exactly:
 
-        "Sorry! I can't find relevant information from the knowledge base."
+"Sorry! I can't find relevant information from the knowledge base."
 
-        CONTEXT:
+CONTEXT:
 
-        {context}
+{context}
 
-        QUESTION:
+QUESTION:
 
-        {question}
+{question}
 
-        ANSWER:
-        """
-
+ANSWER:
+"""
         prompt = PromptTemplate(
             template=template,
             input_variables=["context", "question"]
@@ -125,6 +126,7 @@ if uploaded_files:
                 answer = "Sorry! I can't find relevant information from the knowledge base."
             else:
                 answer = qa_chain.invoke(question)
+
         st.markdown("**Chatbot:**")
         st.write(answer)
 else:
