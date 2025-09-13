@@ -1,37 +1,21 @@
 import os
-
 import streamlit as st
-
 import pdfplumber
-
-from langchain.text_splitter import CharacterTextSplitter
-
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-
 from langchain_community.vectorstores import FAISS
-
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
-
 from langchain_community.llms import HuggingFacePipeline
-
 from langchain.chains import RetrievalQA
-
-from langchain import PromptTemplate
-
+from langchain_core.prompts import PromptTemplate  # updated import per LangChain warning
 import numpy as np
-
 from docx import Document  # pip install python-docx
 
 HF_TOKEN = st.secrets.get("HF_TOKEN", "")
-
 MODEL_NAME = "google/flan-t5-base"
-
 CHUNK_SIZE_DEFAULT = 500
-
 CHUNK_OVERLAP_DEFAULT = 50
-
 RETRIEVER_TOP_K_DEFAULT = 3
-
 SIMILARITY_THRESHOLD = 0.35
 
 # Read text from uploaded PDF file-like object
@@ -41,8 +25,7 @@ def read_pdf_text(pdf_file):
 
 # Read text from uploaded DOC/DOCX file-like object
 def read_doc_text(doc_file):
-    # Save uploaded file temporarily in-memory or disk for python-docx
-    # Since docx.Document supports file-like objects, we pass doc_file directly
+    # docx.Document supports file-like objects, so pass directly
     doc = Document(doc_file)
     fullText = [para.text for para in doc.paragraphs]
     return "\n".join(fullText)
@@ -61,7 +44,11 @@ def extract_text_from_files(files):
     return "\n\n".join(all_texts)
 
 def chunk_document(text, chunk_size, chunk_overlap):
-    splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        separators=["\n\n", "\n", " ", ""]
+    )
     docs = splitter.create_documents([text])
     return docs
 
@@ -81,7 +68,11 @@ def get_similarity(vectordb, embedder, query):
 
 st.title("Student Handbook RAG Chatbot (LangChain)")
 
-uploaded_files = st.file_uploader("Upload your PDFs and DOC/DOCX files", type=["pdf", "doc", "docx"], accept_multiple_files=True)
+uploaded_files = st.file_uploader(
+    "Upload your PDFs and DOC/DOCX files",
+    type=["pdf", "doc", "docx"],
+    accept_multiple_files=True
+)
 
 if uploaded_files:
     with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
@@ -106,7 +97,6 @@ if uploaded_files:
             template=template,
             input_variables=["context", "question"]
         )
-
         qa_chain = RetrievalQA.from_chain_type(
             llm=llm,
             retriever=retriever,
@@ -114,11 +104,8 @@ if uploaded_files:
             return_source_documents=False,
             chain_type_kwargs={"prompt": prompt},
         )
-
     st.subheader("Ask your question")
-
     question = st.text_input("Enter your question:")
-
     if question:
         with st.spinner("Thinking..."):
             similarity = get_similarity(vectordb, embedder, question)
@@ -129,4 +116,4 @@ if uploaded_files:
             st.markdown("**Chatbot:**")
             st.write(answer)
 else:
-    st.info("Please upload one or more PDF or DOC files to proceed.")
+    st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
