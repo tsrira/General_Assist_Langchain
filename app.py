@@ -34,6 +34,8 @@ def read_pdf_text(pdf_file):
 
 def get_similarity(vectordb, embedder, query):
     query_embedding = embedder.embed_query(query)
+    # Convert list to np.array
+    query_embedding = np.array(query_embedding)
     distances, _ = vectordb.index.search(query_embedding.reshape(1, -1), k=1)
     similarity = 1 / (1 + distances[0][0])
     return similarity
@@ -89,3 +91,4 @@ if pdf_file:
                 answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
