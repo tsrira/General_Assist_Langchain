@@ -1,6 +1,6 @@
-# 🦙 Student Handbook RAG Chatbot (Mistral-7B) 📖🤖
+# 🦙 Student Handbook RAG Chatbot (LangChain) 📖🤖
 
-Welcome to a fully open-source, retrieval-augmented chatbot powered by [Mistral-7B](https://huggingface.co/mistralai/Mistral-7B-v1) and Streamlit. This app allows you to query university handbooks or similar documents and get concise, context-aware answers—never hallucinating, always grounded in your uploaded PDF!
+Welcome to a fully open-source, retrieval-augmented chatbot powered by (LangChain) and Streamlit. This app allows you to query university handbooks or similar documents and get concise, context-aware answers—never hallucinating, always grounded in your uploaded PDF!
 
 <div align="center">
   <img src="https://streamlit.io/images/brand/streamlit-logo-primary-colormark-darktext.png" height="60" />
@@ -26,7 +26,11 @@ Streamlit
 
 Transformers
 
-Mistral-7B
+LangChain
+
+google/flan-t5-base
+
+HuggingFace
 
 Sentence Transformers
 
