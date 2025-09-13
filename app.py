@@ -68,7 +68,7 @@ SIMILARITY_THRESHOLD = st.sidebar.slider("Similarity Threshold", 0.1, 0.7, 0.32,
 
 CHUNK_SIZE = CHUNK_SIZE_DEFAULT
 CHUNK_OVERLAP = CHUNK_OVERLAP_DEFAULT
-RETRIEVER_TOP_K = RETRIEVER_TOP_K_DEFAULT, step=1)
+RETRIEVER_TOP_K = RETRIEVER_TOP_K_DEFAULT
 SIMILARITY_THRESHOLD = 0.32
 
 pdf_file = st.file_uploader("Upload your Student Handbook PDF", type=["pdf"])
@@ -140,4 +140,5 @@ if pdf_file:
                 answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
