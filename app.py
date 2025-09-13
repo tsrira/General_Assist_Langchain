@@ -1,24 +1,39 @@
 import os
+
 import streamlit as st
+
 import pdfplumber
+
 from langchain.text_splitter import CharacterTextSplitter
+
 from langchain_huggingface import HuggingFaceEmbeddings
+
 from langchain_community.vectorstores import FAISS
+
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
+
 from langchain_community.llms import HuggingFacePipeline
+
 from langchain.chains import RetrievalQA
-from langchain import PromptTemplate
+
+from langchain_core.prompts import PromptTemplate  # Updated import per warning
+
 import numpy as np
+
 from docx import Document  # pip install python-docx
 
 HF_TOKEN = st.secrets.get("HF_TOKEN", "")
+
 MODEL_NAME = "google/flan-t5-base"
+
 CHUNK_SIZE_DEFAULT = 500
+
 CHUNK_OVERLAP_DEFAULT = 50
+
 RETRIEVER_TOP_K_DEFAULT = 3
+
 SIMILARITY_THRESHOLD = 0.35
 
-# Folder path containing documents
 DOCUMENTS_FOLDER = st.text_input("Enter the folder path containing PDFs and DOC files:")
 
 def read_pdf_text(pdf_path):
@@ -65,46 +80,49 @@ def get_similarity(vectordb, embedder, query):
 
 st.title("Student Handbook RAG Chatbot (LangChain)")
 
-with st.spinner(f"Loading and indexing documents from folder: {DOCUMENTS_FOLDER} ..."):
-    combined_text = extract_text_from_folder(DOCUMENTS_FOLDER)
-    docs = chunk_document(combined_text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
-    embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vectordb = FAISS.from_documents(docs, embedder)
-    retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
-    llm = load_llm()
+if DOCUMENTS_FOLDER and os.path.isdir(DOCUMENTS_FOLDER):
+    with st.spinner(f"Loading and indexing documents from folder: {DOCUMENTS_FOLDER} ..."):
+        combined_text = extract_text_from_folder(DOCUMENTS_FOLDER)
+        docs = chunk_document(combined_text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
+        embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        vectordb = FAISS.from_documents(docs, embedder)
+        retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
+        llm = load_llm()
 
-    template = """
-    You are a helpful assistant. Answer the question ONLY based on the context below.
-    If you do not find relevant information, respond with exactly:
-    "Sorry! I can't find relevant information from the knowledge base."
-    CONTEXT:
-    {context}
-    QUESTION:
-    {question}
-    ANSWER:
-    """
-    prompt = PromptTemplate(
-        template=template,
-        input_variables=["context", "question"]
-    )
+        template = """
+        You are a helpful assistant. Answer the question ONLY based on the context below.
+        If you do not find relevant information, respond with exactly:
+        "Sorry! I can't find relevant information from the knowledge base."
+        CONTEXT:
+        {context}
+        QUESTION:
+        {question}
+        ANSWER:
+        """
+        prompt = PromptTemplate(
+            template=template,
+            input_variables=["context", "question"]
+        )
 
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        retriever=retriever,
-        chain_type="stuff",
-        return_source_documents=False,
-        chain_type_kwargs={"prompt": prompt},
-    )
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm,
+            retriever=retriever,
+            chain_type="stuff",
+            return_source_documents=False,
+            chain_type_kwargs={"prompt": prompt},
+        )
 
-st.subheader("Ask about the Student Handbook, Indian Veg Recipe, Onboarding or Panicker Travels")
-question = st.text_input("Enter your question:")
+    st.subheader("Ask about the Student Handbook, Indian Veg Recipe, Onboarding or Panicker Travels")
+    question = st.text_input("Enter your question:")
 
-if question:
-    with st.spinner("Thinking..."):
-        similarity = get_similarity(vectordb, embedder, question)
-        if similarity < SIMILARITY_THRESHOLD:
-            answer = "Sorry! I can't find relevant information from the knowledge base."
-        else:
-            answer = qa_chain.run(question)
-        st.markdown("**Chatbot:**")
-        st.write(answer)
+    if question:
+        with st.spinner("Thinking..."):
+            similarity = get_similarity(vectordb, embedder, question)
+            if similarity < SIMILARITY_THRESHOLD:
+                answer = "Sorry! I can't find relevant information from the knowledge base."
+            else:
+                answer = qa_chain.run(question)
+            st.markdown("**Chatbot:**")
+            st.write(answer)
+else:
+    st.info("Please enter a valid folder path containing your PDF and DOC files.")
