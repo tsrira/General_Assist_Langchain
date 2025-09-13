@@ -4,7 +4,7 @@ import pdfplumber
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings  # Updated import
 from langchain_community.vectorstores import FAISS
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
 from langchain_community.llms import HuggingFacePipeline
 from langchain.chains import RetrievalQA
 
@@ -17,8 +17,9 @@ CHUNK_OVERLAP = 50
 @st.cache_resource
 def load_llm():
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN, trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, token=HF_TOKEN, trust_remote_code=True)
+    model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME, token=HF_TOKEN, trust_remote_code=True)
     pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer, max_length=256)
+
     return HuggingFacePipeline(pipeline=pipe)
 
 def chunk_document(text, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
@@ -57,4 +58,5 @@ if pdf_file:
             answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
