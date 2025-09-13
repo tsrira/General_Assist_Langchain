@@ -125,7 +125,7 @@ if pdf_file:
     # st.write(f"Similarities (out-of-context): {[f'{s:.3f}' for s in results['out_context_scores']]}")
     # st.write(f"Max out-of-context similarity: {results['max_out_context_similarity']:.3f}")
     # st.write(f"Min in-context similarity: {results['min_in_context_similarity']:.3f}")
-    # st.write(f"Suggested similarity threshold: {results['suggested_threshold']:.3f}")
+    st.write(f"Suggested similarity threshold: {results['suggested_threshold']:.3f}")
 
     st.subheader("Ask about the Handbook")
     question = st.text_input("Enter your question:")
@@ -139,6 +139,7 @@ if pdf_file:
                 answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
 
 
