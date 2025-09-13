@@ -9,21 +9,17 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
 HF_TOKEN = st.secrets.get("HF_TOKEN", "")
 MODEL_NAME = "mistralai/Mistral-7B-v0.1"
-
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
-
 
 @st.cache_resource
 def load_embedder():
     return SentenceTransformer("all-MiniLM-L6-v2")
 
-
 @st.cache_resource
 def embed_chunks(chunks):
     embedder = load_embedder()
     return embedder.encode(chunks, convert_to_numpy=True)
-
 
 @st.cache_resource
 def load_model():
@@ -51,7 +47,6 @@ def load_model():
         )
         return llm_pipe, tokenizer
     except ImportError as e:
-        # Fall back if bitsandbytes fails due to CUDA missing
         st.warning(
             "BitsAndBytes CUDA not available; falling back to full precision model."
         )
@@ -69,8 +64,7 @@ def load_model():
         )
         return llm_pipe, tokenizer
 
-
-def extract_and_chunk_pdf(pdf_path, chunk_size=500, chunk_overlap=50):
+def extract_and_chunk_pdf(pdf_path, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
     texts = []
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
@@ -88,13 +82,11 @@ def extract_and_chunk_pdf(pdf_path, chunk_size=500, chunk_overlap=50):
         start += chunk_size - chunk_overlap
     return chunks
 
-
 def build_faiss_index(chunk_embeddings):
     dimension = chunk_embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
     index.add(chunk_embeddings)
     return index
-
 
 def retrieve_relevant_chunks(query, embedder, index, chunks, top_k=3):
     query_embedding = embedder.encode([query], convert_to_numpy=True)
@@ -102,26 +94,40 @@ def retrieve_relevant_chunks(query, embedder, index, chunks, top_k=3):
     similarities = 1 / (1 + distances[0])  # simple similarity scoring
     return [chunks[i] for i in indices[0]], max(similarities)
 
+def clean_generation(prompt, output):
+    """Extracts only the new answer after the prompt, up to the first repeated Q or end."""
+    answer = output[len(prompt):].strip()
+    # Remove immediate recurrences
+    lines = answer.splitlines()
+    unique_lines = []
+    seen = set()
+    for line in lines:
+        clean = line.strip()
+        if clean and clean not in seen:
+            unique_lines.append(clean)
+            seen.add(clean)
+    return " ".join(unique_lines)
 
-def get_handbook_response(question, llm_pipe, tokenizer, context, sim, threshold=0.4, max_length=512):
+def get_handbook_response(
+    question, llm_pipe, tokenizer, context, sim, threshold=0.4, max_length=256
+):
     if sim < threshold or not context.strip():
         return "Sorry! I can't find relevant information from the knowledge base. Don't provide any additional information."
+
     prompt_template = (
-        "You are a Student Handbook assistant. You Should Generate and summarize the answer only from the given context below.\n"
-        "If context is irrelevant to the question, You should say, Sorry! I can't find relevant information from the knowledge base. Don't provide any additional information.\n"
-        "You should not generate or interpret any response from your knowledge. You are a helpful assistant.\n\n"
-        "CONTEXT:\n" + context + "\n\nQUESTION:\n" + question + "\nANSWER:"
+        "You are a Student Handbook assistant. Answer only from the context provided.\n\n"
+        f"Context:\n{context}\n\n"
+        f"Question: {question}\nAnswer:"
     )
-    generated = llm_pipe(
+    result = llm_pipe(
         prompt_template,
         do_sample=False,
         num_return_sequences=1,
         max_length=max_length,
         eos_token_id=tokenizer.eos_token_id,
     )
-    answer = generated[0]['generated_text'][len(prompt_template):].strip()
-    return answer
-
+    raw_output = result[0]['generated_text']
+    return clean_generation(prompt_template, raw_output)
 
 st.title("Student Handbook RAG Chatbot (Mistral-7B)")
 
@@ -132,9 +138,9 @@ if pdf_file:
         temp_path = "uploaded_handbook.pdf"
         with open(temp_path, "wb") as f:
             f.write(pdf_file.read())
-        chunks = extract_and_chunk_pdf(temp_path, CHUNK_SIZE, CHUNK_OVERLAP)
-        st.write(f"Total chunks created: {len(chunks)}")
 
+        chunks = extract_and_chunk_pdf(temp_path)
+        st.write(f"Total chunks created: {len(chunks)}")
         embedder = load_embedder()
         chunk_embeddings = embed_chunks(chunks)
         index = build_faiss_index(chunk_embeddings)
@@ -148,8 +154,5 @@ if pdf_file:
             relevant_chunks, sim = retrieve_relevant_chunks(question, embedder, index, chunks)
             context = "\n\n".join(relevant_chunks)
             answer = get_handbook_response(question, llm_pipe, tokenizer, context, sim)
-
             st.markdown("**Chatbot:**")
             st.write(answer)
-
-
