@@ -107,7 +107,7 @@ if pdf_file:
             chain_type_kwargs={"prompt": prompt},
         )
 
-    st.subheader("Sample similarity scores for tuning")
+    # st.subheader("Sample similarity scores for tuning")
     in_context_examples = [
         "What is the attendance policy?",
         "How do I apply for leave?",
@@ -139,6 +139,7 @@ if pdf_file:
                 answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
 
 
 
