@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import pdfplumber
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings  # Updated import
 from langchain_community.vectorstores import FAISS
 from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
 from langchain_community.llms import HuggingFacePipeline
@@ -10,6 +10,7 @@ from langchain.chains import RetrievalQA
 
 HF_TOKEN = st.secrets.get("HF_TOKEN", "")
 MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.2"  # Use instruct-tuned model if possible!
+
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
@@ -32,13 +33,14 @@ def read_pdf_text(pdf_file):
 st.title("Student Handbook RAG Chatbot (LangChain)")
 
 pdf_file = st.file_uploader("Upload your Student Handbook PDF", type=["pdf"])
+
 if pdf_file:
     with st.spinner("Extracting and indexing PDF..."):
         # Read and split PDF content
         text = read_pdf_text(pdf_file)
         docs = chunk_document(text)
         # Setup embeddings and vector DB
-        embedder = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")  # Changed to new embeddings
         vectordb = FAISS.from_documents(docs, embedder)
         retriever = vectordb.as_retriever(search_kwargs={"k": 3})
         llm = load_llm()
@@ -48,13 +50,10 @@ if pdf_file:
             chain_type="stuff",
             return_source_documents=False,
         )
-
     st.subheader("Ask about the Handbook")
     question = st.text_input("Enter your question:")
-
     if question:
         with st.spinner("Thinking..."):
             answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
-
