@@ -64,54 +64,62 @@ def get_similarity(vectordb, embedder, query):
 
 st.title("Student Handbook RAG Chatbot (LangChain)")
 
-uploaded_files = st.file_uploader(
-    "Upload your PDFs and DOC/DOCX files",
-    type=["pdf", "doc", "docx"],
-    accept_multiple_files=True
-)
+try:
+    uploaded_files = st.file_uploader(
+        "Upload your PDFs and DOC/DOCX files",
+        type=["pdf", "doc", "docx"],
+        accept_multiple_files=True
+    )
 
-if uploaded_files:
-    with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
-        combined_text = extract_text_from_files(uploaded_files)
-        docs = chunk_document(combined_text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
-        embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-        vectordb = FAISS.from_documents(docs, embedder)
-        retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
-        llm = load_llm()
+    if uploaded_files:
+        with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
+            combined_text = extract_text_from_files(uploaded_files)
+            docs = chunk_document(combined_text, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
+            embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            vectordb = FAISS.from_documents(docs, embedder)
+            retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
+            llm = load_llm()
 
-        template = """
+            template = """
 You are a helpful assistant. Answer the question ONLY based on the context below.
 If you do not find relevant information, respond with exactly:
-\"Sorry! I can't find relevant information from the knowledge base.\"
+"Sorry! I can't find relevant information from the knowledge base."
+
 CONTEXT:
 {context}
+
 QUESTION:
 {question}
+
 ANSWER:
 """
-        prompt = PromptTemplate(
-            template=template,
-            input_variables=["context", "question"]
-        )
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            retriever=retriever,
-            chain_type="stuff",
-            return_source_documents=False,
-            chain_type_kwargs={"prompt": prompt},
-        )
+            prompt = PromptTemplate(
+                template=template,
+                input_variables=["context", "question"]
+            )
 
-    st.subheader("Ask your question")
-    question = st.text_input("Enter your question:")
+            qa_chain = RetrievalQA.from_chain_type(
+                llm=llm,
+                retriever=retriever,
+                chain_type="stuff",
+                return_source_documents=False,
+                chain_type_kwargs={"prompt": prompt},
+            )
 
-    if question:
-        with st.spinner("Thinking..."):
-            similarity = get_similarity(vectordb, embedder, question)
-            if similarity < SIMILARITY_THRESHOLD:
-                answer = "Sorry! I can't find relevant information from the knowledge base."
-            else:
-                answer = qa_chain.invoke(question)  # use invoke() instead of run()
+        st.subheader("Ask your question")
+        question = st.text_input("Enter your question:")
+
+        if question:
+            with st.spinner("Thinking..."):
+                similarity = get_similarity(vectordb, embedder, question)
+                if similarity < SIMILARITY_THRESHOLD:
+                    answer = "Sorry! I can't find relevant information from the knowledge base."
+                else:
+                    answer = qa_chain.invoke(question)  # use invoke() instead of run()
             st.markdown("**Chatbot:**")
             st.write(answer)
-else:
-    st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
+    else:
+        st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
+
+except Exception as e:
+    st.error(f"An error occurred: {e}")
