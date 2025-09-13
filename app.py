@@ -2,10 +2,10 @@ import os
 import streamlit as st
 import pdfplumber
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.vectorstores import FAISS
 from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
-from langchain.llms import HuggingFacePipeline
+from langchain_community.llms import HuggingFacePipeline
 from langchain.chains import RetrievalQA
 
 HF_TOKEN = st.secrets.get("HF_TOKEN", "")
@@ -57,3 +57,4 @@ if pdf_file:
             answer = qa_chain.run(question)
             st.markdown("**Chatbot:**")
             st.write(answer)
+
