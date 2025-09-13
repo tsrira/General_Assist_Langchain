@@ -76,4 +76,4 @@ Contributions and feedback are welcome! Please open an issue or pull request for
 
 ---
 
-Made with ❤️ and Mistral 🚀
+Made with ❤️ and LangChain 🚀
