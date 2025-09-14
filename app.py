@@ -55,9 +55,9 @@ def load_llm():
     return HuggingFacePipeline(pipeline=pipe)
 
 @st.cache_resource(show_spinner=False)
-def create_vectordb(docs):
+def create_vectordb(_docs):
     embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vectordb = FAISS.from_documents(docs, embedder)
+    vectordb = FAISS.from_documents(_docs, embedder)
     return vectordb, embedder
 
 def get_similarity(vectordb, embedder, query):
@@ -127,3 +127,4 @@ if uploaded_files:
             st.write(answer)
 else:
     st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
+
