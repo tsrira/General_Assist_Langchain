@@ -23,6 +23,8 @@ Step 3: The chatbot will return answers that are strictly grounded in the contex
 
 The streamlit app link is [General Assit RAG](https://generalassistlangchain-chatbot.streamlit.app/)
 
+Demo is [Genal Assist RAG Demo](https://youtu.be/T396sgUaOTs)
+
 ## 📦 Technologies Used
 Streamlit
 
