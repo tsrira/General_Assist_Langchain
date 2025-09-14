@@ -15,7 +15,7 @@ MODEL_NAME = "google/flan-t5-base"
 CHUNK_SIZE_DEFAULT = 500
 CHUNK_OVERLAP_DEFAULT = 50
 RETRIEVER_TOP_K_DEFAULT = 3
-SIMILARITY_THRESHOLD = 0.35
+SIMILARITY_THRESHOLD = 0.45
 
 def read_pdf_text(pdf_file):
     with pdfplumber.open(pdf_file) as pdf:
@@ -86,17 +86,12 @@ if uploaded_files:
 
         template = """
         You are a helpful assistant. Answer the question ONLY based on the context below.
-
         If you do not find relevant information, respond with exactly:
-
         "Sorry! I can't find relevant information from the knowledge base."
-
         CONTEXT:
         {context}
-
         QUESTION:
         {question}
-
         ANSWER:
         """
 
@@ -127,4 +122,5 @@ if uploaded_files:
             st.write(answer)
 else:
     st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
+
 
