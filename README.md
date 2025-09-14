@@ -15,11 +15,13 @@ Welcome to a fully open-source, retrieval-augmented chatbot powered by (LangChai
 - **Modern Streamlit UI**: Clean and interactive user experience.
 
 ## 💡 Usage
-Step 1: Click "Upload your Student Handbook PDF" on the sidebar.
+Step 1: Click "Upload your Multiple PDFs files" on the sidebar.
 
-Step 2: Type your questions about policies, exams, support, grading, and more!
+Step 2: Type your questions related to the FAQs specified in the Pdfs, and more!
 
 Step 3: The chatbot will return answers that are strictly grounded in the context of your uploaded document. If the information doesn’t exist, it refuses politely.
+
+The streamlit app link is [General Assit RAG] (https://generalassistlangchain-chatbot.streamlit.app/)
 
 ## 📦 Technologies Used
 Streamlit
@@ -60,11 +62,12 @@ Pull requests, issues, and discussions are welcome! Feel free to fork the reposi
 
 ## 📸 Screenshot
 
-![App Screenshot](./images/screenshot.png)
+<img width="296" height="422" alt="image" src="https://github.com/user-attachments/assets/44cdcb2e-a02c-4ca4-8d26-f6302fe11578" />
+
 
 ## 🎓 About
 
-This chatbot is built for students to easily query university policies, grading schemes, exam formats, and much more—directly from the official PDF handbook.
+This chatbot is built for general FAQ type quesions from multiple PDFs, and much more—directly from the official PDF FAQs or Handbooks.
 
 ## 📝 License
 
