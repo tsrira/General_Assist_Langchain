@@ -21,7 +21,7 @@ Step 2: Type your questions related to the FAQs specified in the Pdfs, and more!
 
 Step 3: The chatbot will return answers that are strictly grounded in the context of your uploaded document. If the information doesn’t exist, it refuses politely.
 
-The streamlit app link is [General Assit RAG] (https://generalassistlangchain-chatbot.streamlit.app/)
+The streamlit app link is [General Assit RAG](https://generalassistlangchain-chatbot.streamlit.app/)
 
 ## 📦 Technologies Used
 Streamlit
