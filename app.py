@@ -79,7 +79,15 @@ def get_similarity(vectordb, embedder, query):
     similarity = 1 / (1 + distances[0][0])
     return similarity
 
+
 st.title("General RAG Chatbot (LangChain)")
+
+# Initialize session state variables
+if "vectordb" not in st.session_state:
+    st.session_state.vectordb = None
+    st.session_state.embedder = None
+    st.session_state.qa_chain = None
+    st.session_state.files_hash = None
 
 uploaded_files = st.file_uploader(
     "Upload your PDFs and DOC/DOCX files",
@@ -87,51 +95,65 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
+# Reset buffer when new files are uploaded
 if uploaded_files:
-    with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
-        all_docs = extract_and_chunk_files(uploaded_files, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
-        vectordb, embedder = create_vectordb(all_docs)
-        retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
-        llm = load_llm()
+    # Create a simple hash from filenames and sizes to detect changes
+    new_files_hash = tuple((f.name, f.size) for f in uploaded_files)
 
-        template = """
-            You are a helpful assistant. Answer the question ONLY based on the context below.
-            If you do not find relevant information, respond with exactly:
-            "Sorry! I can't find relevant information from the knowledge base."
-            CONTEXT:
-            {context}
-            QUESTION:
-            {question}
-            ANSWER:
-         """
+    if st.session_state.files_hash != new_files_hash:
+        # Clear old state
+        st.session_state.vectordb = None
+        st.session_state.embedder = None
+        st.session_state.qa_chain = None
+        st.session_state.files_hash = new_files_hash
 
-        prompt = PromptTemplate(
-            template=template,
-            input_variables=["context", "question"]
-        )
+        with st.spinner(f"Extracting and indexing {len(uploaded_files)} documents..."):
+            all_docs = extract_and_chunk_files(uploaded_files, CHUNK_SIZE_DEFAULT, CHUNK_OVERLAP_DEFAULT)
+            st.session_state.vectordb, st.session_state.embedder = create_vectordb(all_docs)
+            retriever = st.session_state.vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
+            llm = load_llm()
 
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            retriever=retriever,
-            chain_type="stuff",
-            return_source_documents=False,
-            chain_type_kwargs={"prompt": prompt},
-        )
+            template = """
+                You are a helpful assistant. Answer the question ONLY based on the context below.
+                If you do not find relevant information, respond with exactly:
+                "Sorry! I can't find relevant information from the knowledge base."
+                CONTEXT:
+                {context}
+                QUESTION:
+                {question}
+                ANSWER:
+            """
+
+            prompt = PromptTemplate(
+                template=template,
+                input_variables=["context", "question"]
+            )
+
+            st.session_state.qa_chain = RetrievalQA.from_chain_type(
+                llm=llm,
+                retriever=retriever,
+                chain_type="stuff",
+                return_source_documents=False,
+                chain_type_kwargs={"prompt": prompt},
+            )
 
     st.subheader("Ask your question")
     question = st.text_input("Enter your question:")
 
-    if question:
+    if question and st.session_state.qa_chain:
         with st.spinner("Thinking..."):
-            similarity = get_similarity(vectordb, embedder, question)
+            similarity = get_similarity(st.session_state.vectordb, st.session_state.embedder, question)
             if similarity < SIMILARITY_THRESHOLD:
                 answer = "Sorry! I can't find relevant information from the knowledge base."
             else:
-                answer = qa_chain.invoke(question)
+                answer = st.session_state.qa_chain.invoke(question)
 
         st.markdown("**Chatbot:**")
         st.write(answer)
+
+    if st.button("Clear Memory"):
+        st.session_state.clear()
+        st.rerun()
+
 else:
     st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
-
-
