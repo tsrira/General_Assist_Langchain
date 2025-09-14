@@ -94,23 +94,17 @@ if uploaded_files:
         retriever = vectordb.as_retriever(search_kwargs={"k": RETRIEVER_TOP_K_DEFAULT})
         llm = load_llm()
 
-        template = """
-You are a helpful assistant. Answer the question ONLY based on the context below.
-
-If you do not find relevant information, respond with exactly:
-
-"Sorry! I can't find relevant information from the knowledge base."
-
-CONTEXT:
-
-{context}
-
-QUESTION:
-
-{question}
-
-ANSWER:
-"""
+        template = 
+        """
+        You are a helpful assistant. Answer the question ONLY based on the context below.
+        If you do not find relevant information, respond with exactly:
+        "Sorry! I can't find relevant information from the knowledge base."
+        CONTEXT:
+        {context}
+        QUESTION:
+        {question}
+        ANSWER:
+        """
         prompt = PromptTemplate(
             template=template,
             input_variables=["context", "question"]
@@ -139,6 +133,7 @@ ANSWER:
         st.write(answer)
 else:
     st.info("Please upload one or more PDF or DOC/DOCX files to proceed.")
+
 
 
 
